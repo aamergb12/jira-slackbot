@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-import os
+import os, time
 import requests
 from dotenv import load_dotenv
 from base64 import b64encode
@@ -10,6 +10,9 @@ load_dotenv()
 
 # 🌐 Flask App
 app = Flask(__name__)
+
+# ✅ Keep track of handled Slack event IDs to prevent duplicate processing
+handled_event_ids = set()
 
 # 🔐 Environment Variables
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
@@ -45,6 +48,12 @@ def slack_events():
     # ✅ Handle Slack's URL verification
     if "challenge" in data:
         return jsonify({"challenge": data["challenge"]}), 200, {'Content-Type': 'application/json'}
+
+    # 🔐 Slack Event Deduplication
+    event_id = data.get("event_id")
+    if event_id in handled_event_ids:
+        return jsonify({"ok": True})  # Already handled
+    handled_event_ids.add(event_id)
 
     event = data.get("event", {})
     user_msg = event.get("text", "")
