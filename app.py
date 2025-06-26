@@ -66,8 +66,10 @@ def slack_events():
         )
         summary = gpt_resp.choices[0].message.content.strip()
     except Exception as e:
-        send_slack_message(channel_id, f"❌ GPT error: {str(e)}")
-        return jsonify({"ok": False}), 500
+        error_message = f"❌ GPT error: {str(e)}"
+        print(error_message)  # for Flask console logs
+        send_slack_message(channel_id, error_message)
+        return jsonify({"ok": True})  # Tell Slack it was handled so it doesn’t retry
 
     # 🧱 Create Jira issue payload
     jira_payload = {
